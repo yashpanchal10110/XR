@@ -20,7 +20,7 @@ const ImageListScreen = ({ navigation }) => {
 
     try {
       const response = await axios.post(
-        "http://dev3.xicomtechnologies.com/xttest/getdata.php",
+        "https://dev3.xicomtechnologies.com/xttest/getdata.php",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

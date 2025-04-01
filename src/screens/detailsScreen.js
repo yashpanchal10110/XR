@@ -24,7 +24,7 @@ const DetailScreen = ({ route, navigation }) => {
 
     try {
       const response = await axios.post(
-        "http://dev3.xicomtechnologies.com/xttest/savedata.php",
+        "https://dev3.xicomtechnologies.com/xttest/savedata.php",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
