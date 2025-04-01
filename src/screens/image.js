@@ -4,13 +4,12 @@ import axios from "axios";
 
 const ImageListScreen = ({ navigation }) => {
   const [images, setImages] = useState([]);
-  const [imageDimensions, setImageDimensions] = useState({}); // Store dimensions dynamically
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [allLoaded, setAllLoaded] = useState(false); 
+  const [allLoaded, setAllLoaded] = useState(false);
 
   const fetchImages = async () => {
-    if (loading || allLoaded) return; // Prevent duplicate API calls
+    if (loading || allLoaded) return;
     setLoading(true);
 
     const formData = new FormData();
@@ -25,16 +24,19 @@ const ImageListScreen = ({ navigation }) => {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-    //   console.log("API Response:", response.data);
-
       if (response.data.status === "success" && response.data.images.length > 0) {
-        setImages((prevImages) => [...prevImages, ...response.data.images]);
+        const secureImages = response.data.images.map((img) => ({
+          ...img,
+          xt_image: img.xt_image.startsWith("http:") ? img.xt_image.replace("http:", "https:") : img.xt_image,
+        }));
+
+        setImages((prevImages) => [...prevImages, ...secureImages]);
         setOffset((prevOffset) => prevOffset + 1);
       } else {
         setAllLoaded(true);
       }
     } catch (error) {
-    //   console.error("Axios Error:", error.message);
+      console.error("Axios Error:", error.message);
     }
 
     setLoading(false);
@@ -59,16 +61,9 @@ const ImageListScreen = ({ navigation }) => {
               source={{ uri: item.xt_image }}
               style={{
                 width: "100%",
-                height: imageDimensions[item.xt_image] ? imageDimensions[item.xt_image] : 200, // Default height
-                resizeMode: "contain",
+                height: 200, // Fixed height
+                resizeMode: "cover", // Ensures aspect ratio is maintained
                 borderRadius: Platform.OS === "ios" ? 10 : 0,
-              }}
-              onLoad={(event) => {
-                const { width, height } = event.nativeEvent.source;
-                setImageDimensions((prev) => ({
-                  ...prev,
-                  [item.xt_image]: (height / width) * 300, // Dynamic height calculation
-                }));
               }}
             />
           </TouchableOpacity>

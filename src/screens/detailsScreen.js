@@ -5,9 +5,13 @@ import * as Yup from "yup";
 import axios from "axios";
 import { validationSchema } from "../utils/validations";
 
-
 const DetailScreen = ({ route, navigation }) => {
   const { image } = route.params;
+
+  // Ensure HTTPS for the image URL
+  const secureImageUri = image.xt_image.startsWith("http:") 
+    ? image.xt_image.replace("http:", "https:") 
+    : image.xt_image;
 
   const handleSubmit = async (values, { resetForm }) => {
     const formData = new FormData();
@@ -15,9 +19,8 @@ const DetailScreen = ({ route, navigation }) => {
     formData.append("email", values.email);
     formData.append("lastname", values.lastname);
     formData.append("phone", values.phone);
-
     formData.append("image", {
-      uri: image.xt_image,
+      uri: secureImageUri,
       name: "upload.jpg",
       type: "image/jpeg",
     });
@@ -41,8 +44,8 @@ const DetailScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Display Selected Image */}
-      <Image source={{ uri: image.xt_image }} style={styles.image} />
+      {/* Display Image with Aspect Ratio */}
+      <Image source={{ uri: secureImageUri }} style={styles.image} />
 
       <Formik
         initialValues={{ name: "", email: "", lastname: "", phone: "" }}
@@ -114,7 +117,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 250,
+    aspectRatio: 16 / 9, // Maintain aspect ratio instead of fixed height
     borderRadius: 10,
     marginBottom: 20,
   },
