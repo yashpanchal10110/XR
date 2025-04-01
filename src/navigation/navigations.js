@@ -1,6 +1,6 @@
 import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import ImageListScreen from "../screens/image";
+import ImageListScreen from "../screens/imageListScreen";
 import DetailScreen from "../screens/detailsScreen";
 
 const Stack = createStackNavigator();

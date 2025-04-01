@@ -1,102 +1,48 @@
 import React from "react";
 import { View, Image, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ScrollView } from "react-native";
 import { Formik } from "formik";
-import * as Yup from "yup";
-import axios from "axios";
 import { validationSchema } from "../utils/validations";
+import { submitFormData } from "../services/apiServices";
 
 const DetailScreen = ({ route, navigation }) => {
   const { image } = route.params;
-
-  // Ensure HTTPS for the image URL
   const secureImageUri = image.xt_image.startsWith("http:") 
     ? image.xt_image.replace("http:", "https:") 
     : image.xt_image;
 
   const handleSubmit = async (values, { resetForm }) => {
-    const formData = new FormData();
-    formData.append("name", values.name);
-    formData.append("email", values.email);
-    formData.append("lastname", values.lastname);
-    formData.append("phone", values.phone);
-    formData.append("image", {
-      uri: secureImageUri,
-      name: "upload.jpg",
-      type: "image/jpeg",
-    });
-
-    try {
-      const response = await axios.post(
-        "https://dev3.xicomtechnologies.com/xttest/savedata.php",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      console.log("Response:", response.data);
+    const success = await submitFormData(values, secureImageUri);
+    if (success) {
       Alert.alert("Success", "Data submitted successfully!");
       resetForm();
       navigation.goBack();
-    } catch (error) {
-      console.error("Submission Error:", error);
+    } else {
       Alert.alert("Error", "Something went wrong!");
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Display Image with Aspect Ratio */}
       <Image source={{ uri: secureImageUri }} style={styles.image} />
 
-      <Formik
-        initialValues={{ name: "", email: "", lastname: "", phone: "" }}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
+      <Formik initialValues={{ name: "", email: "", lastname: "", phone: "" }} validationSchema={validationSchema} onSubmit={handleSubmit}>
         {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
           <View style={styles.formContainer}>
-            <Text style={styles.label}>Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Name"
-              onChangeText={handleChange("name")}
-              onBlur={handleBlur("name")}
-              value={values.name}
-            />
-            {touched.name && errors.name && <Text style={styles.error}>{errors.name}</Text>}
+            {["name", "email", "lastname", "phone"].map((field, index) => (
+              <View key={index}>
+                <Text style={styles.label}>{field.charAt(0).toUpperCase() + field.slice(1)}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={`Enter ${field}`}
+                  keyboardType={field === "email" ? "email-address" : "default"}
+                  onChangeText={handleChange(field)}
+                  onBlur={handleBlur(field)}
+                  value={values[field]}
+                />
+                {touched[field] && errors[field] && <Text style={styles.error}>{errors[field]}</Text>}
+              </View>
+            ))}
 
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Email"
-              keyboardType="email-address"
-              onChangeText={handleChange("email")}
-              onBlur={handleBlur("email")}
-              value={values.email}
-            />
-            {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
-
-            <Text style={styles.label}>Last Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Last Name"
-              onChangeText={handleChange("lastname")}
-              onBlur={handleBlur("lastname")}
-              value={values.lastname}
-            />
-            {touched.lastname && errors.lastname && <Text style={styles.error}>{errors.lastname}</Text>}
-
-            <Text style={styles.label}>Phone</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Phone"
-              keyboardType="numeric"
-              onChangeText={handleChange("phone")}
-              onBlur={handleBlur("phone")}
-              value={values.phone}
-            />
-            {touched.phone && errors.phone && <Text style={styles.error}>{errors.phone}</Text>}
-
-            {/* Submit Button */}
             <TouchableOpacity style={styles.button} onPress={handleSubmit}>
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
@@ -107,63 +53,15 @@ const DetailScreen = ({ route, navigation }) => {
   );
 };
 
-// **Styles**
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: "#f9f9f9",
-    padding: 20,
-    alignItems: "center",
-  },
-  image: {
-    width: "100%",
-    aspectRatio: 16 / 9, // Maintain aspect ratio instead of fixed height
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  formContainer: {
-    width: "100%",
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 5,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 5,
-    fontSize: 16,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-  },
-  error: {
-    color: "red",
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  button: {
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  container: { flexGrow: 1, backgroundColor: "#f9f9f9", padding: 20, alignItems: "center" },
+  image: { width: "100%", aspectRatio: 16 / 9, borderRadius: 10, marginBottom: 20 },
+  formContainer: { width: "100%", backgroundColor: "#fff", padding: 20, borderRadius: 10, elevation: 3 },
+  label: { fontSize: 16, fontWeight: "bold", marginBottom: 5 },
+  input: { borderWidth: 1, padding: 10, borderRadius: 5, fontSize: 16, marginBottom: 10 },
+  error: { color: "red", fontSize: 14, marginBottom: 10 },
+  button: { backgroundColor: "#007bff", padding: 15, borderRadius: 5, alignItems: "center", marginTop: 10 },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });
 
 export default DetailScreen;
